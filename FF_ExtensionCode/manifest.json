@@ -1,0 +1,52 @@
+{
+  "manifest_version": 3,
+  "name": "IA Detection: Statistical Text Analysis",
+  "version": "1.0",
+  "description": "On calcule sur chaque texte les critères 8 suivant entre 0 et 100.\n\n1. Entropie de l'Information (avec une base de langue francaise, et anglaise)\n2. Compressibilité (Gzip ou LZMA\n3. Présence d'Emojis\n4. Richesse Lexicale (TTR)\tType-Token Ratio : Nombre de mots uniques divisé par le nombre total de mots.\n5. Longueur Moyenne des Phrases\n6. Fréquence des mots de liaison, pronoms, articles, prépositions (e.g., le, la, et, de, à, un).\n7. Uniformité de la Ponctuation de Fin de Phrase (Proportion de points . par rapport à toutes les ponctuations de fin de phrase.)\n8. Utilisation des Virgules et des Parenthèses (Nombre de virgules par 100 mots.)\n\nOn joute ensuite quelques paramètre de poids.\n\nPlus d'infos ici: https://github.com/Ch-Philou/TestAnalyzerExtension",
+  "description": "",
+  "permissions": [
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "text-analyzer-ia@physaphae.addons",
+      "strict_min_version": "113.0",
+	  "data_collection_permissions": {
+        "required": ["none"]
+      }
+    }
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "48": "icons/icon.png",
+      "128": "icons/icon.png"
+    }
+  },
+  "icons": {
+    "48": "icons/icon.png",
+    "128": "icons/icon.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "styles.css"
+      ]
+    }
+  ],
+  "background": {
+    "scripts": [
+      "background.js"
+    ]
+  }
+}

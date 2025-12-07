@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapport de Sécurité - IA Detection Extension</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .badge-safe {
+            background-color: #27ae60;
+        }
+
+        .badge-warning {
+            background-color: #f39c12;
+        }
+
+        .badge-info {
+            background-color: #3498db;
+        }
+
+        .section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+
+        code {
+            background: #eee;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Rapport d'Audit de Sécurité</h1>
+    <p><strong>Cible :</strong> Extension Firefox "IA Detection: Text Analysis" (v1.0)</p>
+    <p><strong>Date :</strong> 23 Novembre 2025</p>
+
+    <div class="section">
+        <h2>1. Analyse des Permissions (Manifest V3)</h2>
+        <p>L'extension utilise le Manifest V3, qui est le standard actuel le plus sécurisé pour les extensions web.</p>
+
+        <ul>
+            <li>
+                <span class="badge badge-warning">host_permissions: &lt;all_urls&gt;</span>
+                <br><strong>Analyse :</strong> Cette permission est puissante car elle permet à l'extension de lire le
+                contenu de toutes les pages visitées.
+                <br><strong>Justification :</strong> C'est <u>nécessaire</u> pour le fonctionnement même de l'extension
+                (analyse de texte sur n'importe quel site).
+                <br><strong>Risque :</strong> Si l'extension était compromise, elle pourrait lire des données sensibles.
+                Cependant, le code source montre qu'aucune donnée n'est exfiltrée.
+            </li>
+            <li>
+                <span class="badge badge-info">permissions: storage</span>
+                <br>Utilisé uniquement pour sauvegarder les préférences utilisateur (seuils, poids) localement. Aucun
+                risque majeur.
+            </li>
+            <li>
+                <span class="badge badge-info">permissions: scripting</span>
+                <br>Utilisé pour injecter le script d'analyse. Standard pour ce type d'outil.
+            </li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>2. Confidentialité des Données (Privacy)</h2>
+        <span class="badge badge-safe">Excellent</span>
+        <p>L'audit du code source (<code>content.js</code>, <code>background.js</code>) révèle que :</p>
+        <ul>
+            <li><strong>Aucune requête réseau externe :</strong> L'extension ne communique avec aucun serveur (pas de
+                Google Analytics, pas de télémétrie, pas d'API tierce).</li>
+            <li><strong>Traitement Local :</strong> Toute l'analyse de texte (calcul d'entropie, détection de
+                connecteurs) se fait à 100% dans le navigateur de l'utilisateur.</li>
+            <li><strong>Pas de stockage de données sensibles :</strong> Le texte analysé n'est jamais stocké, il est
+                traité à la volée et oublié dès la fermeture de la page ou de la modale.</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>3. Sécurité du Code (XSS & Injection)</h2>
+
+        <h3>Injection de Contenu (innerHTML)</h3>
+        <p>Le fichier <code>content.js</code> utilise <code>innerHTML</code> pour construire l'interface de la modale.
+        </p>
+        <ul>
+            <li><strong>Vecteur potentiel :</strong> Si une variable injectée contenait du code malveillant (ex:
+                <code>&lt;script&gt;...</code>), cela pourrait exécuter du code (XSS).</li>
+            <li><strong>Audit des variables :</strong>
+                <ul>
+                    <li><code>t.title</code>, <code>t.labels</code> : Proviennent de l'objet <code>I18N</code> (codé en
+                        dur dans le fichier). <strong>Sûr.</strong></li>
+                    <li><code>scores</code> : Ce sont des nombres calculés mathématiquement. <strong>Sûr.</strong></li>
+                    <li><code>langName</code> : Provient de la liste <code>LANG_NAMES</code> (codée en dur).
+                        <strong>Sûr.</strong></li>
+                </ul>
+            </li>
+            <li><strong>Conclusion :</strong> Bien que l'utilisation de <code>innerHTML</code> soit généralement
+                déconseillée, dans ce contexte précis avec des données contrôlées, le risque est <strong>nul</strong>.
+            </li>
+        </ul>
+
+        <h3>Communication (Message Passing)</h3>
+        <p>Les messages entre le popup, le background et le content script (<code>show_results</code>,
+            <code>recalculate</code>) sont simples et ne transportent pas de charge utile complexe (payload) pouvant
+            être exploitée.</p>
+    </div>
+
+    <div class="section">
+        <h2>4. Recommandations & Corrections</h2>
+        <p>L'état actuel est sécurisé pour un usage en production.</p>
+
+        <h3>Améliorations futures (Best Practices) :</h3>
+        <ol>
+            <li><strong>Sanitization :</strong> Si vous prévoyez d'afficher des données provenant de la page (ex:
+                "Extrait du texte analysé : ..."), il faudra impérativement "échapper" (sanitize) ce texte avant de
+                l'insérer via <code>innerHTML</code> pour éviter qu'un site malveillant ne piège l'extension.</li>
+            <li><strong>CSP (Content Security Policy) :</strong> Le Manifest V3 impose déjà une CSP stricte qui empêche
+                l'exécution de code distant, ce qui est une excellente protection par défaut.</li>
+        </ol>
+    </div>
+
+    <div class="section" style="border-left: 5px solid #27ae60;">
+        <h2>Conclusion</h2>
+        <p>L'extension <strong>IA Detection</strong> respecte les standards de sécurité et de confidentialité.</p>
+        <p>Elle est <strong>"Privacy-First"</strong> (tout est local) et ne présente pas de vulnérabilité critique
+            exploitable dans sa version actuelle.</p>
+    </div>
+
+</body>
+
+</html>

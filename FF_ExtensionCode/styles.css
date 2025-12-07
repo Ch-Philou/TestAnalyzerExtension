@@ -1,0 +1,211 @@
+/* styles.css */
+
+/* Modal Container */
+#text-analyzer-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 999999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Segoe UI', sans-serif;
+  backdrop-filter: blur(2px);
+}
+
+/* Content Box (Dark Theme) */
+.text-analyzer-content.advanced.dark-theme {
+  background-color: #1e1e1e;
+  color: #e0e0e0;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  width: 700px;
+  max-width: 90%;
+  text-align: center;
+  border: 1px solid #333;
+  max-height: 90vh;
+  /* Prevent overflow on small height */
+  overflow-y: auto;
+  /* Scroll if needed */
+}
+
+.text-analyzer-content h2 {
+  margin-top: 0;
+  color: #fff;
+  font-size: 22px;
+  margin-bottom: 20px;
+}
+
+/* Grid Layout for Disks */
+.analyzer-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+/* Disk Styles */
+.analyzer-disk-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.analyzer-disk {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 8px;
+  position: relative;
+}
+
+.analyzer-disk-inner {
+  width: 48px;
+  height: 48px;
+  background-color: #1e1e1e;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.analyzer-disk-value {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.analyzer-disk-label {
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.analyzer-disk-expl {
+  font-size: 10px;
+  color: #aaa;
+  line-height: 1.2;
+  max-width: 140px;
+}
+
+/* Global Score Section */
+.analyzer-global {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #333;
+}
+
+.analyzer-global h3 {
+  margin: 0 0 10px 0;
+  font-size: 18px;
+  color: #fff;
+}
+
+/* Stacked Bar Slider */
+.analyzer-slider-container.stacked {
+  width: 100%;
+  height: 20px;
+  background-color: #333;
+  border-radius: 10px;
+  position: relative;
+  margin: 15px 0;
+  overflow: hidden;
+  display: flex;
+}
+
+.analyzer-bar-segment {
+  height: 100%;
+  transition: width 0.5s ease-out;
+  cursor: help;
+}
+
+.analyzer-bar-segment:hover {
+  filter: brightness(1.2);
+}
+
+/* Threshold Marker */
+.analyzer-slider-threshold {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: #fff;
+  z-index: 10;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
+}
+
+.analyzer-threshold-info {
+  font-size: 12px;
+  color: #888;
+  margin: 5px 0 0 0;
+}
+
+/* Footer Info */
+.analyzer-footer-info {
+  margin-top: 20px;
+  font-size: 11px;
+  color: #666;
+  border-top: 1px solid #333;
+  padding-top: 10px;
+}
+
+/* Close Button */
+#text-analyzer-close {
+  margin-top: 15px;
+  padding: 8px 20px;
+  background-color: #444;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.2s;
+}
+
+#text-analyzer-close:hover {
+  background-color: #555;
+}
+
+/* --- MOBILE RESPONSIVE --- */
+@media (max-width: 600px) {
+  .text-analyzer-content.advanced.dark-theme {
+    width: 95%;
+    padding: 15px;
+    max-height: 95vh;
+  }
+
+  .analyzer-grid {
+    grid-template-columns: repeat(2, 1fr);
+    /* 2 columns on mobile */
+    gap: 10px;
+  }
+
+  .analyzer-disk {
+    width: 50px;
+    height: 50px;
+  }
+
+  .analyzer-disk-inner {
+    width: 40px;
+    height: 40px;
+  }
+
+  .analyzer-disk-value {
+    font-size: 12px;
+  }
+
+  .text-analyzer-content h2 {
+    font-size: 18px;
+    margin-bottom: 15px;
+  }
+
+  .analyzer-global h3 {
+    font-size: 16px;
+  }
+}
