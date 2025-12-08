@@ -552,92 +552,150 @@ async function runAnalysis(forceDisplay = false) {
 }
 
 // --- UI ---
+// --- UI (Safe DOM Creation) ---
 function showAdvancedModal(scores, globalScore, duration, analysisLang, uiLang, totalWeight) {
+  const t = I18N[uiLang] || I18N['en'];
+  const langName = LANG_NAMES[analysisLang] || analysisLang.toUpperCase();
+
+  // Create Modal Container
   const modal = document.createElement('div');
   modal.id = 'text-analyzer-modal';
 
-  const t = I18N[uiLang] || I18N['en'];
+  // Create Content Box
+  const contentDiv = document.createElement('div');
+  contentDiv.className = 'text-analyzer-content advanced dark-theme';
 
-  // Génération des Disques
-  let disksHtml = '';
+  // Title
+  const h2 = document.createElement('h2');
+  h2.textContent = t.title;
+  contentDiv.appendChild(h2);
+
+  // Grid Layout
+  const gridDiv = document.createElement('div');
+  gridDiv.className = 'analyzer-grid';
+
+  // Generate Disks using DOM
   for (const [key, value] of Object.entries(scores)) {
     const percent = Math.round(value);
-    const color = CRITERIA_COLORS[key]; // Couleur fixe par critère
+    const color = CRITERIA_COLORS[key];
     const explanation = getExplanation(key, percent, uiLang);
-    const label = t.labels[key] || key;
+    const labelText = t.labels[key] || key;
 
-    // Couleur du texte de valeur (Rouge si élevé = IA, Vert si bas = Humain)
     const valueColor = percent > 66 ? '#F44336' : (percent < 33 ? '#4CAF50' : '#FFC107');
 
-    disksHtml += `
-      <div class="analyzer-disk-container">
-        <div class="analyzer-disk" style="background: conic-gradient(${color} ${percent}%, #333 ${percent}%);">
-          <div class="analyzer-disk-inner">
-            <span class="analyzer-disk-value" style="color: ${valueColor}">${percent}</span>
-          </div>
-        </div>
-        <span class="analyzer-disk-label" style="color: ${color}">${label}</span>
-        <span class="analyzer-disk-expl">${explanation}</span>
-      </div>
-    `;
-  }
+    const diskContainer = document.createElement('div');
+    diskContainer.className = 'analyzer-disk-container';
 
-  // Génération de la Stacked Bar
-  let barSegmentsHtml = '';
-  // Trier les segments pour un rendu propre ? Non, ordre fixe.
+    // Disk
+    const disk = document.createElement('div');
+    disk.className = 'analyzer-disk';
+    disk.style.background = `conic-gradient(${color} ${percent}%, #333 ${percent}%)`;
+
+    const diskInner = document.createElement('div');
+    diskInner.className = 'analyzer-disk-inner';
+
+    const diskValue = document.createElement('span');
+    diskValue.className = 'analyzer-disk-value';
+    diskValue.style.color = valueColor;
+    diskValue.textContent = percent;
+
+    diskInner.appendChild(diskValue);
+    disk.appendChild(diskInner);
+
+    // Label
+    const spanLabel = document.createElement('span');
+    spanLabel.className = 'analyzer-disk-label';
+    spanLabel.style.color = color;
+    spanLabel.textContent = labelText;
+
+    // Explanation
+    const spanExpl = document.createElement('span');
+    spanExpl.className = 'analyzer-disk-expl';
+    spanExpl.textContent = explanation;
+
+    diskContainer.appendChild(disk);
+    diskContainer.appendChild(spanLabel);
+    diskContainer.appendChild(spanExpl);
+    gridDiv.appendChild(diskContainer);
+  }
+  contentDiv.appendChild(gridDiv);
+
+  // Global Score Section
+  const globalDiv = document.createElement('div');
+  globalDiv.className = 'analyzer-global';
+
+  const h3 = document.createElement('h3');
+  h3.textContent = t.global_score + ': ';
+  const scoreSpan = document.createElement('span');
+  scoreSpan.id = 'global-score-val';
+  scoreSpan.textContent = Math.round(globalScore);
+  h3.appendChild(scoreSpan);
+  h3.append('%'); // Text node
+  globalDiv.appendChild(h3);
+
+  // Stacked Bar
+  const sliderContainer = document.createElement('div');
+  sliderContainer.className = 'analyzer-slider-container stacked';
+
+  // Generate Bar Segments
   for (const [key, value] of Object.entries(scores)) {
     const weight = config.weights[key] || 0;
-    const contribution = (value * weight) / totalWeight; // Points apportés au score global
+    const contribution = (value * weight) / totalWeight;
 
-    // Largeur en % de la barre totale (qui fait 100% de largeur mais représente 100 points)
-    // Si ScoreGlobal = 60, la barre remplie doit faire 60% de largeur.
-    // La contribution de ce critère est 'contribution'.
-    // Donc width = contribution %.
-
-    if (contribution > 0.5) { // On n'affiche pas les micro-segments
+    if (contribution > 0.5) {
       const label = t.labels[key] || key;
       const color = CRITERIA_COLORS[key];
-      barSegmentsHtml += `
-        <div class="analyzer-bar-segment" 
-             style="width: ${contribution}%; background-color: ${color};" 
-             title="${label}: +${contribution.toFixed(1)} pts">
-        </div>
-      `;
+
+      const segment = document.createElement('div');
+      segment.className = 'analyzer-bar-segment';
+      segment.style.width = `${contribution}%`;
+      segment.style.backgroundColor = color;
+      segment.title = `${label}: +${contribution.toFixed(1)} pts`;
+
+      sliderContainer.appendChild(segment);
     }
   }
 
-  const langName = LANG_NAMES[analysisLang] || analysisLang.toUpperCase();
+  // Threshold Marker
+  const thresholdMarker = document.createElement('div');
+  thresholdMarker.className = 'analyzer-slider-threshold';
+  thresholdMarker.style.left = `${config.threshold}%`;
+  thresholdMarker.title = `${t.threshold}: ${config.threshold}`;
+  sliderContainer.appendChild(thresholdMarker);
 
-  modal.innerHTML = `
-    <div class="text-analyzer-content advanced dark-theme">
-      <h2>${t.title}</h2>
-      <div class="analyzer-grid">
-        ${disksHtml}
-      </div>
-      
-      <div class="analyzer-global">
-        <h3>${t.global_score}: <span id="global-score-val">${Math.round(globalScore)}</span>%</h3>
-        
-        <!-- Stacked Bar Container -->
-        <div class="analyzer-slider-container stacked">
-          ${barSegmentsHtml}
-          <!-- Threshold Marker -->
-          <div class="analyzer-slider-threshold" style="left: ${config.threshold}%" title="${t.threshold}: ${config.threshold}"></div>
-        </div>
-        
-        <p class="analyzer-threshold-info">${t.threshold} : ${config.threshold}%</p>
-      </div>
+  globalDiv.appendChild(sliderContainer);
 
-      <div class="analyzer-footer-info">
-        ${t.language} : <strong>${langName}</strong> • ${t.time} : ${duration} ms
-      </div>
-      <button id="text-analyzer-close">${t.close}</button>
-    </div>
-  `;
+  const pThreshold = document.createElement('p');
+  pThreshold.className = 'analyzer-threshold-info';
+  pThreshold.textContent = `${t.threshold} : ${config.threshold}%`;
+  globalDiv.appendChild(pThreshold);
 
+  contentDiv.appendChild(globalDiv);
+
+  // Footer Info
+  const footerDiv = document.createElement('div');
+  footerDiv.className = 'analyzer-footer-info';
+
+  footerDiv.textContent = `${t.language} : `;
+  const strongLang = document.createElement('strong');
+  strongLang.textContent = langName;
+  footerDiv.appendChild(strongLang);
+  footerDiv.append(` • ${t.time} : ${duration} ms`);
+
+  contentDiv.appendChild(footerDiv);
+
+  // Close Button
+  const closeBtn = document.createElement('button');
+  closeBtn.id = 'text-analyzer-close';
+  closeBtn.textContent = t.close;
+  contentDiv.appendChild(closeBtn);
+
+  // Final Assembly
+  modal.appendChild(contentDiv);
   document.body.appendChild(modal);
 
-  document.getElementById('text-analyzer-close').addEventListener('click', () => {
+  // Close Event
+  closeBtn.addEventListener('click', () => {
     modal.remove();
   });
 }

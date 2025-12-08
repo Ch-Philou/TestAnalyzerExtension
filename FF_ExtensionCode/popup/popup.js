@@ -361,7 +361,8 @@ function updateTexts(lang) {
     document.getElementById('btn-infos').textContent = t.btn_infos;
 
     document.querySelectorAll('.nav-back').forEach(el => {
-        el.innerHTML = `&#8592; ${t.back}`;
+        el.textContent = ' ' + t.back;
+        el.prepend(document.createTextNode('\u2190'));
     });
 
     document.querySelector('.toggle-label').textContent = t.lbl_auto;
@@ -380,14 +381,19 @@ function updateTexts(lang) {
     });
 
     const infoContainer = document.querySelector('#view-infos .settings-scroll');
-    infoContainer.innerHTML = '';
+    infoContainer.textContent = '';
     CRITERIA_KEYS.forEach(key => {
         const div = document.createElement('div');
         div.className = 'info-item';
-        div.innerHTML = `
-      <h3>${t.labels[key]}</h3>
-      <p>${t.infos[key]}</p>
-    `;
+
+        const h3 = document.createElement('h3');
+        h3.textContent = t.labels[key];
+
+        const p = document.createElement('p');
+        p.textContent = t.infos[key];
+
+        div.appendChild(h3);
+        div.appendChild(p);
         infoContainer.appendChild(div);
     });
 }
@@ -406,23 +412,41 @@ function initSettings() {
     const threshLabel = thresholdInput.parentElement.previousElementSibling;
     threshLabel.setAttribute('for', 'threshold');
 
+    // 1. Génération DOM des Sliders (via createElement)
     CRITERIA_KEYS.forEach(key => {
         const div = document.createElement('div');
         div.className = 'form-group';
-        div.innerHTML = `
-      <label id="lbl-w-${key}">...</label>
-      <div class="slider-container">
-        <input type="range" id="w-${key}" min="0" max="10" step="0.001">
-        <span id="val-${key}" class="value-display"></span>
-      </div>
-    `;
+
+        const label = document.createElement('label');
+        label.id = `lbl-w-${key}`;
+        label.textContent = "...";
+
+        const sliderContainer = document.createElement('div');
+        sliderContainer.className = 'slider-container';
+
+        const input = document.createElement('input');
+        input.type = 'range';
+        input.id = `w-${key}`;
+        input.min = '0';
+        input.max = '10';
+        input.step = '0.001';
+
+        const span = document.createElement('span');
+        span.id = `val-${key}`;
+        span.className = 'value-display';
+
+        sliderContainer.appendChild(input);
+        sliderContainer.appendChild(span);
+
+        div.appendChild(label);
+        div.appendChild(sliderContainer);
+
         weightsContainer.appendChild(div);
 
-        const input = div.querySelector('input');
-        const display = div.querySelector('span');
-        input.addEventListener('input', () => display.textContent = input.value);
+        input.addEventListener('input', () => span.textContent = input.value);
     });
 
+    // 2. Initialisation des Valeurs (Async)
     chrome.storage.local.get(['threshold', 'weights', 'language', 'autoAnalysis'], (result) => {
         const th = result.threshold !== undefined ? result.threshold : DEFAULT_CONFIG.threshold;
         thresholdInput.value = th;
@@ -431,7 +455,6 @@ function initSettings() {
         const lang = result.language || DEFAULT_CONFIG.language;
         languageSelect.value = lang;
 
-        // Auto Analysis Toggle
         const isAuto = result.autoAnalysis !== undefined ? result.autoAnalysis : DEFAULT_CONFIG.autoAnalysis;
         autoToggle.checked = isAuto;
 
@@ -448,6 +471,7 @@ function initSettings() {
         });
     });
 
+    // 3. Event Listeners
     thresholdInput.addEventListener('input', () => thresholdVal.textContent = thresholdInput.value);
 
     languageSelect.addEventListener('change', () => {
